@@ -1,0 +1,16 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# 비밀값 / 실행 데이터 / 도구 캐시
+.env
+data/
+.pytest_cache/
+.ruff_cache/
