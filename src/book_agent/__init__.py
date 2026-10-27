@@ -1,9 +1,8 @@
-'''book-agent 패키지.'''
+"""book-agent 패키지."""
+
 
 def main() -> None:
-    from .device import resolve_device
-    from .settings import load_settings
+    # 무거운 import(langchain, chroma, torch)는 실제로 실행할 때만 일어나도록 지연한다.
+    from .app import main as run_app
 
-    settings=load_settings()
-
-    print(f"model={settings.llm_model}, device={resolve_device(settings.device)}")
+    run_app()
