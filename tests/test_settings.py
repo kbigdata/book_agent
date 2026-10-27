@@ -17,7 +17,7 @@ def test_defaults(make_settings):
     사전조건: 설정 관련 환경변수 제거, .env 미사용
     절차: API 키 두 개만 넣어 Settings 생성
     기대결과: llm_model=gpt-5.5, embedding_provider=openai, chunk 1000/100, top_k 5, 조사 한도 2,
-        도구 호출 한도 6, thread_id=book_001
+        도구 호출 한도 6, thread_id=book_001, LLM 타임아웃 120초·클라이언트 재시도 1회
     """
     s = make_settings()
     assert s.llm_model == 'gpt-5.5'
@@ -26,6 +26,7 @@ def test_defaults(make_settings):
     assert (s.chunk_size, s.chunk_overlap, s.search_top_k) == (1000, 100, 5)
     assert (s.max_research_rounds, s.max_tool_calls, s.max_history_tokens) == (2, 6, 8000)
     assert s.thread_id == 'book_001'
+    assert (s.llm_timeout, s.llm_max_retries) == (120, 1)
 
 
 def test_derived_paths_follow_data_dir(make_settings, tmp_path):
@@ -103,6 +104,8 @@ def test_missing_tavily_key_fails(make_settings):
         ('max_research_rounds', -1),
         ('max_tool_calls', 0),
         ('max_history_tokens', 0),
+        ('llm_timeout', 0),
+        ('llm_max_retries', -1),
         ('embedding_provider', 'cohere'),
         ('device', 'mps'),
     ],

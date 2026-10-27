@@ -40,11 +40,20 @@ EXIT_WORDS = {'q', 'quit', 'exit'}
 STREAM_NODES = {'content_strategist', 'communicator'}  # 토큰 단위로 출력할 노드
 
 # 체크포인트에서 복원을 허용할 사용자 정의 타입 (이 외의 타입은 역직렬화하지 않는다).
-CHECKPOINT_TYPES = [('book_agent.models', 'Task'), ('book_agent.models', 'ResearchNote')]
+CHECKPOINT_TYPES = [
+    ('book_agent.models', 'Task'),
+    ('book_agent.models', 'ResearchNote'),
+    ('book_agent.models', 'Source'),  # ResearchNote.sources 안의 타입도 등록해야 복원된다
+]
 
 
 def build_context(settings: Settings) -> AppContext:
-    llm = ChatOpenAI(model=settings.llm_model, api_key=settings.openai_api_key)
+    llm = ChatOpenAI(
+        model=settings.llm_model,
+        api_key=settings.openai_api_key,
+        timeout=settings.llm_timeout,  # 기본값(None)이면 응답이 없을 때 끝없이 기다린다
+        max_retries=settings.llm_max_retries,
+    )
 
     vectors = VectorStoreService(
         persist_dir=settings.chroma_dir,
@@ -119,7 +128,9 @@ def run_turn(
                     task = update['tasks'][-1]
                     print(f'\n[supervisor] 다음 작업 -> {task.agent}: {task.description}')
                 elif node == 'researcher':
-                    print(f'\n[researcher] 조사 완료 ({update["research_rounds"]}회차)')
+                    sources = len(update['research_notes'][-1].sources)
+                    rounds = update['research_rounds']
+                    print(f'\n[researcher] 조사 완료 ({rounds}회차, 출처 {sources}건)')
     print()
 
 

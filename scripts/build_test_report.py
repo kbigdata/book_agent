@@ -34,6 +34,7 @@ MODULES = {
     'test_errors.py': ('ERR', 'errors.py'),
     'test_services.py': ('SVC', 'services.py'),
     'test_tools.py': ('TOL', 'tools.py'),
+    'test_sources.py': ('SRC', '출처 구조화 (tools / models / nodes)'),
     'test_nodes.py': ('NOD', 'nodes.py'),
     'test_graph.py': ('GRP', 'graph.py'),
     'test_app.py': ('APP', 'app.py / __init__.py'),

@@ -40,6 +40,12 @@ class Settings(BaseSettings):
 
     device: Literal['auto', 'cuda', 'cpu'] = 'auto'
 
+    # 외부 API 호출 제한: 응답이 없으면 llm_timeout 초 뒤 실패하고,
+    # 클라이언트가 llm_max_retries 번 다시 시도한다.
+    # 한 호출이 멈출 수 있는 최대 시간은 llm_timeout * (llm_max_retries + 1) 이다.
+    llm_timeout: float = Field(default=120, gt=0)
+    llm_max_retries: int = Field(default=1, ge=0)
+
     # 저장 위치
     data_dir: Path = PROJECT_ROOT / 'data'
 
