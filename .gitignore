@@ -14,3 +14,5 @@ wheels/
 data/
 .pytest_cache/
 .ruff_cache/
+# 테스트 결과 JSON (scripts/build_test_report.py 의 입력, 다시 만들 수 있음)
+docs/*_results.json
