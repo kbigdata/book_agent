@@ -175,7 +175,8 @@ def test_researcher_agent_uses_tools(ctx):
     우선순위: 상
     사전조건: 빈 벡터 DB, 도구 호출 한도(max_tool_calls)
     절차: RESEARCH_REQUEST 로 조사 임무 1건 실행
-    기대결과: 도구 호출 1회 이상·한도 이하, 최종 답변 비어 있지 않고 URL(http) 포함
+    기대결과: 도구 호출 1회 이상·한도 이하, 최종 답변 비어 있지 않고 URL(http) 포함,
+        extract_sources 결과가 1건 이상이고 모두 도구 출력에 있던 URL·제목
     """
     request = RESEARCH_REQUEST.format(
         mission='Python 3.13 의 주요 신기능 3가지를 조사',
@@ -190,6 +191,16 @@ def test_researcher_agent_uses_tools(ctx):
     final = result['messages'][-1].text
     assert final.strip()
     assert 'http' in final
+
+    # 출처 구조화: 답변이 인용한 URL 중 도구가 실제로 돌려준 것만 Source 로 남는다.
+    from langchain_core.messages import ToolMessage
+
+    from book_agent.tools import extract_sources
+
+    sources = extract_sources(result['messages'])
+    tool_text = '\n'.join(m.text for m in result['messages'] if isinstance(m, ToolMessage))
+    assert sources, '실제 조사 결과에서 출처를 하나도 추출하지 못했다'
+    assert all(s.url in tool_text and s.title for s in sources)
 
 
 def test_full_turn_with_real_apis(ctx, capsys):

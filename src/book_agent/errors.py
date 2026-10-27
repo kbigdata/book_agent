@@ -54,7 +54,13 @@ def describe_error(exc: BaseException) -> ErrorInfo | None:
             )
         case tavily_errors.UsageLimitExceededError():
             return ErrorInfo('Tavily 사용 한도를 넘었습니다. 남은 크레딧을 확인하세요.')
-        case openai.APIConnectionError() | tavily_errors.TimeoutError():  # 타임아웃 포함
+        case openai.APITimeoutError():  # APIConnectionError 의 하위 클래스라 먼저 검사한다
+            # 클라이언트가 이미 LLM_MAX_RETRIES 만큼 다시 시도했다. 그래프까지 재시도하면
+            # 멈춰 있는 시간이 몇 배로 늘어나므로 재시도하지 않는다.
+            return ErrorInfo(
+                'OpenAI 응답 시간이 초과되었습니다(LLM_TIMEOUT). 잠시 후 다시 시도하세요.'
+            )
+        case openai.APIConnectionError() | tavily_errors.TimeoutError():
             return ErrorInfo(
                 '외부 API 서버에 연결하지 못했습니다. 네트워크를 확인하세요.', retryable=True
             )

@@ -30,10 +30,14 @@
 - 장 하나를 만드는 긴 과정은 **하위 그래프**로 분리한다(`recursion_limit` 과 supervisor 호출 비용 때문).
 - 오류 분류(`errors.py`), 재시도 정책, UTF-8 입출력, SQLite 체크포인트는 그대로 재사용한다.
 
-## 먼저 처리할 문제
+## 선행 작업 (완료)
 
-- **0단계: LLM 타임아웃 추가.** 현재 `app.py` 의 `ChatOpenAI` 에 타임아웃이 없어 한 호출이 openai 기본값(600초) × 재시도만큼 멈출 수 있다.
-  실험에서 실제로 20분 넘게 응답 없이 멈춘 사례가 있었다([04_experiments.md](04_experiments.md) B-4). 본문 작성과 별개로 먼저 고친다.
+- **0단계: LLM 타임아웃 추가 — 완료.** `ChatOpenAI` 에 타임아웃이 없어 한 호출이 openai 기본값(600초) × 재시도만큼 멈출 수 있었다
+  (실험에서 20분 넘게 멈춘 사례, [04_experiments.md](04_experiments.md) B-4). `LLM_TIMEOUT`(기본 120초)·`LLM_MAX_RETRIES`(기본 1)를
+  LLM 과 임베딩에 적용했고, 타임아웃은 클라이언트가 이미 재시도하므로 그래프 재시도 대상에서 뺐다.
+- **출처 구조화 — 완료.** `ResearchNote.sources: list[Source]`(제목, URL). researcher 답변에 인용된 URL 중
+  검색 도구가 실제로 돌려준 것만 남긴다(지어낸 URL 제외). 검증 3층(주장 ↔ 출처 대조)과 장 끝 참고 자료 목록의 기반이다.
+  `sources` 가 없던 이전 체크포인트도 기본값(빈 목록)으로 복원된다.
 
 ## 보류된 결정
 

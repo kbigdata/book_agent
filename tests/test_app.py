@@ -29,7 +29,8 @@ def test_build_context_wires_dependencies(make_settings):
     우선순위: 상
     사전조건: 더미 API 키, data_dir=tmp_path, 조사 한도 4, 기록 한도 1234
     절차: build_context(settings)
-    기대결과: 한도 값 전달, 목차 저장소 경로 연결, researcher 에이전트 이름, LLM 모델명
+    기대결과: 한도 값 전달, 목차 저장소 경로 연결, researcher 에이전트 이름, LLM 모델명,
+        LLM 타임아웃 120초·재시도 1회 적용(타임아웃 없이 무한 대기하지 않음)
     """
     settings = make_settings(max_research_rounds=4, max_history_tokens=1234, llm_model='m-test')
     ctx = build_context(settings)
@@ -39,6 +40,7 @@ def test_build_context_wires_dependencies(make_settings):
     assert ctx.outline_repo.load() == '아직 작성된 목차가 없습니다.'
     assert ctx.researcher.name == 'researcher'
     assert ctx.llm.model_name == 'm-test'
+    assert (ctx.llm.request_timeout, ctx.llm.max_retries) == (120, 1)
 
 
 def test_build_context_researcher_has_tools(make_settings):
@@ -168,8 +170,8 @@ def test_run_turn_prints_progress_and_streams_writer_nodes(make_ctx, capsys):
     우선순위: 상
     사전조건: 플래너 [researcher, content_strategist], LLM 답변 [목차, 보고]
     절차: run_turn 실행 후 표준출력 확인
-    기대결과: supervisor 다음 작업 2줄, researcher 조사 완료(1회차), [content_strategist] 목차,
-        [communicator] 보고
+    기대결과: supervisor 다음 작업 2줄, researcher 조사 완료(1회차, 출처 0건),
+        [content_strategist] 목차, [communicator] 보고
     """
     ctx = make_ctx(
         plans=[plan('researcher', '자료 조사'), plan('content_strategist', '목차 작성')],
@@ -182,7 +184,7 @@ def test_run_turn_prints_progress_and_streams_writer_nodes(make_ctx, capsys):
     out = capsys.readouterr().out
     assert '[supervisor] 다음 작업 -> researcher: 자료 조사' in out
     assert '[supervisor] 다음 작업 -> content_strategist: 목차 작성' in out
-    assert '[researcher] 조사 완료 (1회차)' in out
+    assert '[researcher] 조사 완료 (1회차, 출처 0건)' in out
     assert '[content_strategist]\n# 1장' in out
     assert '[communicator]\n완료했습니다' in out
 
@@ -210,7 +212,7 @@ def test_run_turn_hides_researcher_tokens(make_ctx, capsys):
 
     out = capsys.readouterr().out
     assert '비밀 토큰' not in out
-    assert '[researcher] 조사 완료 (1회차)' in out
+    assert '[researcher] 조사 완료 (1회차, 출처 0건)' in out
 
 
 def test_run_turn_prints_speaker_header_once(make_ctx, capsys):

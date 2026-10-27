@@ -106,7 +106,8 @@ def test_cli_first_session_creates_outline(session_dir):
     사전조건: 빈 DATA_DIR, 조사 1회와 4장 목차를 요청
     절차: 요청 1건 입력 → 'q'
     기대결과: 종료 코드 0, 인코딩 오류 없음, [supervisor]/[communicator] 출력,
-        outline.md 에 '#' 제목, resources/*.json·chroma 생성, 체크포인트는 human 대기·모든 작업 done
+        outline.md 에 '#' 제목, resources/*.json·chroma 생성,
+        체크포인트는 human 대기·모든 작업 done, 조사 노트에 구조화된 출처(Source) 저장
     """
     result = run_cli([FIRST_REQUEST, 'q'], session_dir)
 
@@ -124,6 +125,8 @@ def test_cli_first_session_creates_outline(session_dir):
     assert all(t.status == 'done' for t in state.values['tasks'])
     assert state.values['messages'][0].content == FIRST_REQUEST
     assert len(state.values['research_notes']) >= 1
+    # 출처가 구조화되어 저장되고, 프로세스를 넘어 체크포인트에서 복원된다.
+    assert any(note.sources for note in state.values['research_notes'])
 
 
 def test_cli_restart_resumes_conversation(session_dir):

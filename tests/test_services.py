@@ -435,3 +435,17 @@ def test_build_embeddings_huggingface(make_settings, monkeypatch):
         'model_kwargs': {'device': 'cpu'},
         'encode_kwargs': {'normalize_embeddings': True},
     }
+
+
+def test_build_embeddings_applies_timeout(make_settings):
+    """OpenAI 임베딩에도 LLM 타임아웃과 재시도 횟수가 적용된다.
+
+    대상: services.build_embeddings (settings.llm_timeout, llm_max_retries)
+    구분: 정상
+    우선순위: 중
+    사전조건: llm_timeout=30, llm_max_retries=0
+    절차: build_embeddings(settings)
+    기대결과: request_timeout=30, max_retries=0
+    """
+    embeddings = build_embeddings(make_settings(llm_timeout=30, llm_max_retries=0))
+    assert (embeddings.request_timeout, embeddings.max_retries) == (30, 0)

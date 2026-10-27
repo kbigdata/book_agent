@@ -35,7 +35,12 @@ def build_embeddings(settings: Settings) -> Embeddings:
         )
     from langchain_openai import OpenAIEmbeddings
 
-    return OpenAIEmbeddings(model=settings.openai_embedding_model, api_key=settings.openai_api_key)
+    return OpenAIEmbeddings(
+        model=settings.openai_embedding_model,
+        api_key=settings.openai_api_key,
+        timeout=settings.llm_timeout,
+        max_retries=settings.llm_max_retries,
+    )
 
 
 # 벡터 DB : 결정적 id로 중복 제거

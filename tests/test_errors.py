@@ -34,7 +34,7 @@ CASES = [
     ),
     ('tavily-limit', tavily_errors.UsageLimitExceededError('limit'), False, False, 'Tavily'),
     ('openai-conn', openai.APIConnectionError(request=REQUEST), False, True, '네트워크'),
-    ('openai-timeout', openai.APITimeoutError(request=REQUEST), False, True, '네트워크'),
+    ('openai-timeout', openai.APITimeoutError(request=REQUEST), False, False, 'LLM_TIMEOUT'),
     ('tavily-timeout', tavily_errors.TimeoutError(30), False, True, '네트워크'),
     ('openai-400', status_error(openai.BadRequestError, 400), False, False, '거부'),
     ('tavily-400', tavily_errors.BadRequestError('bad'), False, False, '거부'),
@@ -57,8 +57,9 @@ def test_known_errors_are_classified(exc, fatal, retryable, keyword):
     사전조건: OpenAI/Tavily/LangGraph 예외 객체 생성(실제 호출 없음)
     절차: describe_error(exc)
     기대결과: 설정 오류(401/403/404/Tavily 키)는 fatal,
-        일시적 오류(429/연결/타임아웃/5xx)는 retryable,
-        크레딧 부족·400·기타 4xx 는 둘 다 아님, 안내 문구에 확인할 항목 포함
+        일시적 오류(429/연결/Tavily 타임아웃/5xx)는 retryable,
+        OpenAI 타임아웃(클라이언트가 이미 재시도)·크레딧 부족·400·기타 4xx 는 둘 다 아님,
+        안내 문구에 확인할 항목 포함
     """
     info = describe_error(exc)
     assert info is not None
@@ -101,6 +102,7 @@ def test_unknown_errors_return_none(exc):
         (status_error(openai.AuthenticationError, 401), False),
         (status_error(openai.RateLimitError, 429), True),
         (openai.APIConnectionError(request=REQUEST), True),
+        (openai.APITimeoutError(request=REQUEST), False),
         (status_error(openai.BadRequestError, 400), False),
         (ValueError('bug'), False),
         (ConnectionError('reset'), True),
@@ -110,6 +112,7 @@ def test_unknown_errors_return_none(exc):
         'auth',
         'rate-limit',
         'connection',
+        'openai-timeout',
         'bad-request',
         'value-error',
         'os-connection',
@@ -124,7 +127,8 @@ def test_retry_on(exc, expected):
     우선순위: 상
     사전조건: 분류된 오류와 분류되지 않은 오류
     절차: retry_on(exc)
-    기대결과: 인증·400 은 재시도 안 함, 429·연결은 재시도, ValueError 는 기본 규칙대로 재시도 안 함,
+    기대결과: 인증·400·OpenAI 타임아웃은 재시도 안 함, 429·연결은 재시도,
+        ValueError 는 기본 규칙대로 재시도 안 함,
         ConnectionError·일반 Exception 은 기본 규칙대로 재시도
     """
     assert retry_on(exc) is expected

@@ -4,6 +4,7 @@
 - TaskPlan      : supervisor LLM 이 출력하는 구조화 스키마(LLM 전용)
 - Task          : 그래프 안에서 관리하는 작업 레코드 (내부 전용)
 - ResearchNote  : research가 남기는 조사 요약
+- Source        : 조사 노트의 출처(제목, URL)
 """
 
 from datetime import datetime
@@ -52,9 +53,18 @@ class Task(TaskPlan):
         return self.model_copy(update={'status': 'done', 'done_at': datetime.now()})
 
 
+class Source(BaseModel):
+    """조사 노트의 출처 한 건. 검색 도구가 실제로 돌려준 문서만 들어간다."""
+
+    title: str
+    url: str
+
+
 class ResearchNote(BaseModel):
-    """researcher 가 한 번의 조사로 남기는 요약(출처 포함.)"""
+    """researcher 가 한 번의 조사로 남기는 요약과 출처 목록."""
 
     topic: str
     summary: str
+    # 기본값을 두어 sources 가 없던 이전 체크포인트도 그대로 복원된다.
+    sources: list[Source] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)

@@ -26,6 +26,7 @@ from .prompts import (
     SUPERVISOR_PROMPT,
 )
 from .state import State, current_task
+from .tools import extract_sources
 
 
 class RoutingError(RuntimeError):
@@ -132,10 +133,15 @@ class ResearcherNode(WorkerNode):
         )
         # 하위 에이전트는 '새 대화'로 실행한다. 도구 호출 기록이 메인 대화를 오염시키지 않는다.
         result = ctx.researcher.invoke({'messages': [HumanMessage(request)]})
-        summary = result['messages'][-1].text
+        messages = result['messages']
+        note = ResearchNote(
+            topic=task.description,
+            summary=messages[-1].text,
+            sources=extract_sources(messages),  # 도구가 실제로 돌려준 출처만 남긴다
+        )
 
         return {
-            'research_notes': [ResearchNote(topic=task.description, summary=summary)],
+            'research_notes': [note],
             'research_rounds': state.get('research_rounds', 0) + 1,
         }
 
